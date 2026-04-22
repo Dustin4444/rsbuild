@@ -1,22 +1,22 @@
 ---
-description: '当前文档列出了从 Rsbuild 1.x 到 2.0 的所有不兼容更新，你可以参考此文档来迁移。'
+description: '当前文档列出了从 Rsbuild v1 到 2.0 的所有不兼容更新，你可以参考此文档来迁移。'
 ---
 
 import { PackageManagerTabs } from '@theme';
 
 # 从 v1 升级到 v2
 
-当前文档列出了从 Rsbuild 1.x 到 2.0 的所有不兼容更新，你可以参考此文档来迁移。
+当前文档列出了从 Rsbuild v1 到 2.0 的所有不兼容更新，你可以参考此文档来迁移。
 
 ## 使用 Agent Skills
 
-如果你在使用支持 Skills 的 Coding Agent，可以安装 [rsbuild-v2-upgrade](https://github.com/rstackjs/agent-skills#rsbuild-v2-upgrade) 技能来辅助完成 v1 到 v2 的升级流程。
+如果你正在使用支持 skills 的 coding agent，可以安装 [rsbuild-v2-upgrade](https://github.com/rstackjs/agent-skills#rsbuild-v2-upgrade) skill，由 Agent 自动协助完成依赖升级、配置调整和迁移检查，减少手动操作成本。
 
 ```bash
 npx skills add rstackjs/agent-skills --skill rsbuild-v2-upgrade
 ```
 
-安装后，让 Coding Agent 协助完成升级即可。
+安装后，让 coding agent 协助完成升级即可。
 
 ## 升级 Rsbuild 到 v2
 
@@ -99,11 +99,7 @@ Rsbuild 2.0 最低支持的 Node.js 版本为 20.19+ 或 22.12+，不再支持 N
 
 ## Pure ESM 包
 
-[@rsbuild/core](https://www.npmjs.com/package/@rsbuild/core) 现已以 pure ESM 包的形式发布，并移除了自身的 CommonJS 构建产物。这一调整仅影响 Rsbuild 本身的发布形式，使安装体积减少了约 500KB。
-
-在 Node.js 20 及以上版本中，运行时已原生支持通过 [require(esm)](https://nodejs.org/api/modules.html#loading-ecmascript-modules-using-require) 加载 ESM 模块。因此，对大多数仍通过 JavaScript API 使用 Rsbuild 的项目来说，这一变更通常不会带来实际影响，也无需额外修改现有代码。
-
-> 这一变更不影响 Rsbuild 构建 CommonJS 产物的能力，相关的构建行为和配置方式也保持不变。
+[@rsbuild/core](https://www.npmjs.com/package/@rsbuild/core) 现已以 pure ESM 包的形式发布。
 
 ## 依赖变更
 
@@ -165,7 +161,7 @@ export default {
 
 ### Node 产物
 
-当 [output.target](/config/output/target) 为 `node` 时，Rsbuild 2.0 会通过 [output.module](/config/output/module) 默认输出 ESM 产物，并保持 [output.minify](/config/output/minify) 关闭。在 Rsbuild 1.x 中，默认行为是输出 CommonJS 且开启压缩。
+当 [output.target](/config/output/target) 为 `node` 时，Rsbuild 2.0 会通过 [output.module](/config/output/module) 默认输出 ESM 产物，并保持 [output.minify](/config/output/minify) 关闭。在 Rsbuild v1 中，默认行为是输出 CommonJS 且开启压缩。
 
 该调整更贴近 Node 的现代 ESM 生态，同时保留更清晰的调试堆栈与排查体验。
 
@@ -479,7 +475,7 @@ export default {
 
 ## 移除 webpack 支持
 
-Rsbuild 2.0 不再支持使用 webpack 作为打包工具。在 Rsbuild 1.x 版本中，该能力主要用于验证 Rspack 与 webpack 之间的兼容性。随着 Rspack 的逐步成熟和稳定，这一用途已不再必要，因此相关支持被正式移除。
+Rsbuild 2.0 不再支持使用 webpack 作为打包工具。在 Rsbuild v1 版本中，该能力主要用于验证 Rspack 与 webpack 之间的兼容性。随着 Rspack 的逐步成熟和稳定，这一用途已不再必要，因此相关支持被正式移除。
 
 具体变更如下：
 
