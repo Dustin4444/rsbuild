@@ -18,6 +18,28 @@ const HASH_PLACEHOLDER_REGEX =
 
 const normalizePath = (value: string) => value.replace(/\\/g, '/');
 
+const isParentDirRelativePath = (value: string) =>
+  value === '..' || value.startsWith(`..${path.sep}`);
+
+const getRelativePath = (root: string, resourcePath: string) => {
+  const relativePath = path.relative(root, resourcePath);
+  if (
+    relativePath &&
+    !isParentDirRelativePath(relativePath) &&
+    !path.isAbsolute(relativePath)
+  ) {
+    return normalizePath(relativePath);
+  }
+};
+
+const getCSSUrlNameSource = (root: string, resourcePath: string) =>
+  getRelativePath(path.join(root, 'src'), resourcePath) ??
+  getRelativePath(root, resourcePath) ??
+  path.basename(resourcePath);
+
+const getCSSUrlAssetName = (nameSource: string, ext: string) =>
+  ext ? nameSource.slice(0, -ext.length) : nameSource;
+
 const isCSSModules = (
   modules: CSSLoaderOptions['modules'],
   resourcePath: string,
@@ -111,13 +133,13 @@ export const pitch: PitchLoaderDefinitionFunction<CSSUrlLoaderOptions> =
     const content = getCSSContent(moduleExports);
 
     const ext = path.extname(this.resourcePath);
-    const name = path.basename(this.resourcePath, ext);
     const sourceFilename = normalizePath(
       path.relative(this.rootContext, this.resourcePath),
     );
+    const nameSource = getCSSUrlNameSource(this.rootContext, this.resourcePath);
+    const name = getCSSUrlAssetName(nameSource, ext);
     const contentHash = getContentHash(this, content);
     const pathData: PathData = {
-      filename: sourceFilename,
       contentHash,
       chunk: {
         name,
