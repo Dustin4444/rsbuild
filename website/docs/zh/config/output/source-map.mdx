@@ -15,12 +15,10 @@ type SourceMap =
       extract?:
         | boolean
         | {
-            js?:
-              | boolean
-              | {
-                  include?: Rspack.RuleSetCondition[];
-                  exclude?: Rspack.RuleSetCondition[];
-                };
+            /** @default /\.(?:js|mjs|cjs|jsx)$/ */
+            test?: Rspack.RuleSetCondition;
+            include?: Rspack.RuleSetCondition[];
+            exclude?: Rspack.RuleSetCondition[];
           };
     };
 ```
@@ -146,10 +144,14 @@ export default {
 
 ## 提取 source map
 
-使用 `sourceMap.extract` 可以从匹配的 JavaScript 文件中提取已有的 source map。这在第三方包已经同时产出 `.js` 和 `.js.map` 文件时会很有用。
+使用 `sourceMap.extract` 可以从匹配的文件中提取已有的 source map。这在第三方包已经同时产出构建产物和 source map 文件（例如 `.js` 和 `.js.map`）时会很有用。
 
 :::tip
 该功能基于 Rspack 的 [`module.rules[].extractSourceMap`](https://rspack.rs/zh/config/module-rules#rulesextractsourcemap) 实现，可以替代 `source-map-loader`。
+:::
+
+:::note
+启用 `output.sourceMap.css` 后，CSS source map 会由 CSS 构建链路处理。大多数情况下，你不需要使用 `sourceMap.extract` 来保留已有的 CSS source map。
 :::
 
 要为所有 JavaScript 文件开启提取，可以这样配置：
@@ -165,6 +167,8 @@ export default {
 };
 ```
 
+启用 `extract` 后，默认情况下 Rsbuild 会从 JavaScript 文件中提取已有的 source map。
+
 你也可以通过 `include` 或 `exclude` 将提取范围限制到特定文件，这有助于减少性能开销：
 
 ```ts title="rsbuild.config.ts"
@@ -173,9 +177,22 @@ export default {
     sourceMap: {
       js: 'source-map',
       extract: {
-        js: {
-          include: [/node_modules[\\/]some-package[\\/]/],
-        },
+        include: [/node_modules[\\/]some-package[\\/]/],
+      },
+    },
+  },
+};
+```
+
+仅在需要自定义文件匹配规则时使用 `test`：
+
+```ts title="rsbuild.config.ts"
+export default {
+  output: {
+    sourceMap: {
+      js: 'source-map',
+      extract: {
+        test: /node_modules[\\/]some-package[\\/].*\.mjs$/,
       },
     },
   },
@@ -184,6 +201,7 @@ export default {
 
 ## 版本历史
 
-| 版本   | 变更内容                      |
-| ------ | ----------------------------- |
-| v2.0.0 | 新增 `sourceMap.extract` 选项 |
+| 版本   | 变更内容                                                        |
+| ------ | --------------------------------------------------------------- |
+| v2.0.0 | 新增 `sourceMap.extract` 选项                                   |
+| v2.0.3 | 为 `sourceMap.extract` 新增 `test`、`include` 和 `exclude` 选项 |

@@ -5,8 +5,15 @@ import type {
   RsbuildPlugin,
   Rspack,
   RspackChain,
+  SourceMapExtractOptions,
   SourceMapExtractTarget,
 } from '../types';
+
+type ExtractRuleConfig = {
+  name: string;
+  test: Rspack.RuleSetCondition;
+  target: SourceMapExtractTarget;
+};
 
 const getDevtool = (config: NormalizedEnvironmentConfig): Rspack.DevTool => {
   const { sourceMap } = config.output;
@@ -45,33 +52,62 @@ export const pluginSourceMap = (): RsbuildPlugin => ({
       };
     };
 
+    const normalizeExtractOptions = (
+      extract: SourceMapExtractOptions = {},
+    ): ExtractRuleConfig | false => {
+      const hasLegacyJs = 'js' in extract;
+      const hasFlatFields = (['test', 'include', 'exclude'] as const).some(
+        (key) => extract[key] !== undefined,
+      );
+
+      // TODO: remove legacy `extract.js` support in the next major release.
+      // Keep `extract.js: false` as an explicit opt-out for merged configs.
+      if (extract.js === false) return false;
+
+      // Preserve the deprecated `extract.js` shape when it is used by itself.
+      if (hasLegacyJs && !hasFlatFields) {
+        const legacyJs = normalizeExtractTarget(extract.js);
+        if (!legacyJs) return false;
+
+        return {
+          name: 'source-map-extract-js',
+          test: JS_REGEX,
+          target: legacyJs,
+        };
+      }
+
+      const { test, include, exclude } = extract;
+
+      return {
+        name: 'source-map-extract',
+        test: test ?? JS_REGEX,
+        target: {
+          include: include?.map(normalizeRuleConditionPath),
+          exclude: exclude?.map(normalizeRuleConditionPath),
+        },
+      };
+    };
+
     const getExtractConfig = (config: NormalizedEnvironmentConfig) => {
       const { sourceMap } = config.output;
 
       if (typeof sourceMap !== 'object' || !sourceMap.extract) return false;
-      if (sourceMap.extract === true) return { js: {} };
-
-      const js = normalizeExtractTarget(sourceMap.extract.js);
-      if (!js) return false;
-
-      return { js } as const;
+      if (sourceMap.extract === true) return normalizeExtractOptions();
+      if (typeof sourceMap.extract !== 'object') return false;
+      return normalizeExtractOptions(sourceMap.extract);
     };
 
     const applyExtractRule = (
       chain: RspackChain,
-      name: string,
-      test: RegExp,
-      target: false | SourceMapExtractTarget,
+      extractConfig: ExtractRuleConfig,
     ) => {
-      if (!target) return;
-
+      const { name, test, target } = extractConfig;
       const rule = chain.module
         .rule(name)
         .test(test)
         .set('extractSourceMap', true);
 
       const { include, exclude } = target;
-
       if (include) {
         for (const condition of include) {
           rule.include.add(condition);
@@ -91,12 +127,7 @@ export const pluginSourceMap = (): RsbuildPlugin => ({
         const extractConfig = getExtractConfig(environment.config);
         if (!extractConfig) return;
 
-        applyExtractRule(
-          chain,
-          'source-map-extract-js',
-          JS_REGEX,
-          extractConfig.js,
-        );
+        applyExtractRule(chain, extractConfig);
       },
     });
 

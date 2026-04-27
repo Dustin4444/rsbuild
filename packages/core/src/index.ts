@@ -189,6 +189,7 @@ export type {
   SourceConfig,
   SourceMap,
   SourceMapExtract,
+  SourceMapExtractOptions,
   SourceMapExtractTarget,
   SplitChunks,
   SplitChunksConfig,

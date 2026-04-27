@@ -15,12 +15,10 @@ type SourceMap =
       extract?:
         | boolean
         | {
-            js?:
-              | boolean
-              | {
-                  include?: Rspack.RuleSetCondition[];
-                  exclude?: Rspack.RuleSetCondition[];
-                };
+            /** @default /\.(?:js|mjs|cjs|jsx)$/ */
+            test?: Rspack.RuleSetCondition;
+            include?: Rspack.RuleSetCondition[];
+            exclude?: Rspack.RuleSetCondition[];
           };
     };
 ```
@@ -146,10 +144,14 @@ export default {
 
 ## Extract source map
 
-Use `sourceMap.extract` to extract existing source maps from matched JavaScript files. This is useful when a third-party package already ships both `.js` and `.js.map` files.
+Use `sourceMap.extract` to extract existing source maps from matched files. This is useful when a third-party package already ships both output files and source map files, such as `.js` and `.js.map`.
 
 :::tip
 This option is implemented based on Rspack's [`module.rules[].extractSourceMap`](https://rspack.rs/config/module-rules#rulesextractsourcemap) and can replace `source-map-loader`.
+:::
+
+:::note
+CSS source maps are handled by the CSS build pipeline when `output.sourceMap.css` is enabled. In most cases, you do not need `sourceMap.extract` to preserve existing CSS source maps.
 :::
 
 To enable extraction for all JavaScript files:
@@ -165,6 +167,8 @@ export default {
 };
 ```
 
+When `extract` is enabled, Rsbuild extracts existing source maps from JavaScript files by default.
+
 Use `include` or `exclude` to limit extraction to specific files, which can help reduce performance overhead:
 
 ```ts title="rsbuild.config.ts"
@@ -173,9 +177,22 @@ export default {
     sourceMap: {
       js: 'source-map',
       extract: {
-        js: {
-          include: [/node_modules[\\/]some-package[\\/]/],
-        },
+        include: [/node_modules[\\/]some-package[\\/]/],
+      },
+    },
+  },
+};
+```
+
+Use `test` only when you need a custom file matcher:
+
+```ts title="rsbuild.config.ts"
+export default {
+  output: {
+    sourceMap: {
+      js: 'source-map',
+      extract: {
+        test: /node_modules[\\/]some-package[\\/].*\.mjs$/,
       },
     },
   },
@@ -184,6 +201,7 @@ export default {
 
 ## Version history
 
-| Version | Changes                          |
-| ------- | -------------------------------- |
-| v2.0.0  | Added `sourceMap.extract` option |
+| Version | Changes                                                               |
+| ------- | --------------------------------------------------------------------- |
+| v2.0.0  | Added `sourceMap.extract` option                                      |
+| v2.0.3  | Added `test`, `include`, and `exclude` options to `sourceMap.extract` |
