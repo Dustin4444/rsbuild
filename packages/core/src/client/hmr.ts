@@ -148,7 +148,12 @@ export function init(
       logger.error(error);
     }
 
-    if (createOverlay) {
+    const { overlay } = config;
+    if (
+      createOverlay &&
+      (overlay === true ||
+        (typeof overlay === 'object' && overlay.errors !== false))
+    ) {
       createOverlay('Build failed', html);
     }
   }
