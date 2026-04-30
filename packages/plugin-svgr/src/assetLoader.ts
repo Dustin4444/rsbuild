@@ -1,4 +1,5 @@
 import path from 'node:path';
+import { Buffer } from 'node:buffer';
 import type { Rspack } from '@rsbuild/core';
 import { interpolateName } from 'loader-utils';
 
@@ -16,7 +17,7 @@ export type SvgAssetLoaderOptions = {
 
 type RawLoaderDefinition<OptionsType = {}> = ((
   this: Rspack.LoaderContext<OptionsType>,
-  content: Buffer,
+  content: Buffer | string,
 ) => string | Buffer | void | Promise<string | Buffer | void>) & {
   raw: true;
 };
@@ -30,15 +31,18 @@ const assetLoader: RawLoaderDefinition<SvgAssetLoaderOptions> = function (
   content,
 ) {
   const { limit, name, publicPath } = this.getOptions();
+  const buffer = Buffer.isBuffer(content)
+    ? content
+    : Buffer.from(content, 'utf8');
 
-  if (content.length <= limit) {
-    const dataUrl = `data:${SVG_MIME_TYPE};base64,${content.toString('base64')}`;
+  if (buffer.length <= limit) {
+    const dataUrl = `data:${SVG_MIME_TYPE};base64,${buffer.toString('base64')}`;
     return `export default ${JSON.stringify(dataUrl)}`;
   }
 
   const filename = interpolateName(this, name, {
     context: this.rootContext,
-    content,
+    content: buffer,
   });
 
   const assetInfo: {
@@ -54,7 +58,7 @@ const assetLoader: RawLoaderDefinition<SvgAssetLoaderOptions> = function (
     assetInfo.immutable = true;
   }
 
-  this.emitFile(filename, content, undefined, assetInfo);
+  this.emitFile(filename, buffer, undefined, assetInfo);
 
   /**
    * Keep compatibility with Rslib, which overrides this loader option
