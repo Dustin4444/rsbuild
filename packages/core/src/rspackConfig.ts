@@ -3,9 +3,9 @@ import {
   type ConfigChainAsyncWithContext,
   reduceConfigsAsyncWithContext,
 } from 'reduce-configs';
+import { merge } from 'rspack-merge';
 import { CHAIN_ID, modifyBundlerChain } from './configChain';
 import { castArray, color, getNodeEnv } from './helpers';
-import { requireCompiledPackage } from './helpers/vendors';
 import type { Logger } from './logger';
 import { getHTMLPlugin } from './pluginHelper';
 import type {
@@ -67,10 +67,7 @@ export function getConfigUtils(
   return {
     ...chainUtils,
 
-    mergeConfig: (...args) => {
-      const { merge } = requireCompiledPackage('webpack-merge');
-      return merge(...args);
-    },
+    mergeConfig: merge,
 
     addRules(rules) {
       const config = getCurrentConfig();
