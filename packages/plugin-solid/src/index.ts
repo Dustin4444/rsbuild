@@ -30,13 +30,19 @@ export type PluginSolidOptions = {
    * Options passed to `babel-preset-solid`.
    * @see https://npmjs.com/package/babel-preset-solid
    */
+  solid?: SolidPresetOptions;
+  /**
+   * Options passed to `babel-preset-solid`.
+   * If both `solid` and `solidPresetOptions` are set, `solid` takes precedence.
+   * @deprecated Use `solid` instead.
+   */
   solidPresetOptions?: SolidPresetOptions;
 };
 
 export const PLUGIN_SOLID_NAME = 'rsbuild:solid';
 
 export function pluginSolid(options: PluginSolidOptions = {}): RsbuildPlugin {
-  const { dev, ssr, solidPresetOptions } = options;
+  const { dev, solid, solidPresetOptions, ssr } = options;
 
   return {
     name: PLUGIN_SOLID_NAME,
@@ -76,7 +82,8 @@ export function pluginSolid(options: PluginSolidOptions = {}): RsbuildPlugin {
                   require.resolve('babel-preset-solid'),
                   {
                     ...defaultPresetOptions,
-                    ...(solidPresetOptions || {}),
+                    ...solidPresetOptions,
+                    ...solid,
                   },
                 ],
               ];
