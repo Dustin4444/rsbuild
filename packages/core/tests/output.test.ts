@@ -13,6 +13,81 @@ describe('plugin-output', () => {
     expect(bundlerConfigs[0].output).toMatchSnapshot();
   });
 
+  it('should allow enabling filename hash in development mode', async () => {
+    rs.stubEnv('NODE_ENV', 'development');
+
+    const rsbuild = await createRsbuild({
+      config: {
+        output: {
+          filenameHash: {
+            enable: 'always',
+          },
+        },
+      },
+    });
+
+    const bundlerConfigs = await rsbuild.initConfigs();
+    const [config] = bundlerConfigs;
+
+    expect(config.output).toMatchSnapshot();
+    expect(matchPlugin(config, 'CssExtractRspackPlugin')).toMatchObject({
+      options: {
+        filename: 'static/css/[name].[contenthash:10].css',
+        chunkFilename: 'static/css/async/[name].[contenthash:10].css',
+      },
+    });
+  });
+
+  it('should allow customizing filename hash format with object config', async () => {
+    rs.stubEnv('NODE_ENV', 'production');
+
+    const rsbuild = await createRsbuild({
+      config: {
+        output: {
+          filenameHash: {
+            format: 'contenthash:16',
+          },
+        },
+      },
+    });
+
+    const bundlerConfigs = await rsbuild.initConfigs();
+    const [config] = bundlerConfigs;
+
+    expect(config.output).toMatchSnapshot();
+    expect(matchPlugin(config, 'CssExtractRspackPlugin')).toMatchObject({
+      options: {
+        filename: 'static/css/[name].[contenthash:16].css',
+        chunkFilename: 'static/css/async/[name].[contenthash:16].css',
+      },
+    });
+  });
+
+  it('should allow disabling filename hash with object config', async () => {
+    rs.stubEnv('NODE_ENV', 'production');
+
+    const rsbuild = await createRsbuild({
+      config: {
+        output: {
+          filenameHash: {
+            enable: false,
+          },
+        },
+      },
+    });
+
+    const bundlerConfigs = await rsbuild.initConfigs();
+    const [config] = bundlerConfigs;
+
+    expect(config.output).toMatchSnapshot();
+    expect(matchPlugin(config, 'CssExtractRspackPlugin')).toMatchObject({
+      options: {
+        filename: 'static/css/[name].css',
+        chunkFilename: 'static/css/async/[name].css',
+      },
+    });
+  });
+
   it('should allow customizing server directory with distPath.root', async () => {
     const rsbuild = await createRsbuild({
       config: {
